@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Capture Photo</title>
+  
+	<link rel="stylesheet" href="master.css">
+    <script type="text/javascript" charset="utf-8" src="cordova-2.7.0.js"></script>
+   
+     <script type="text/javascript" charset="utf-8">
+
+     var pictureSource;   // picture source
+     var destinationType; // sets the format of returned value 
+
+          
+     // Wait for Cordova to connect with the device
+     //
+     document.addEventListener("deviceready",onDeviceReady,false);
+
+     // Cordova is ready to be used!
+     //
+     function onDeviceReady() {
+         pictureSource=navigator.camera.PictureSourceType;
+         destinationType=navigator.camera.DestinationType;
+         capturePhoto();
+     }
+
+     // Called when a photo is successfully retrieved
+     //
+     function onPhotoDataSuccess(imageData) {
+       // Uncomment to view the base64 encoded image data
+       // console.log(imageData);
+		
+       window.imgURI = imageData;
+       
+       // Get image handle
+       //
+       var smallImage = document.getElementById('smallImage');
+
+       // Unhide image elements
+       //
+       smallImage.style.display = 'block';
+
+       // Show the captured photo
+       // The inline CSS rules are used to resize the image
+       //
+       smallImage.src = "data:image/jpeg;base64," + imageData;
+       
+       //start retrieving position
+       navigator.geolocation.getCurrentPosition(onSuccess, onError);
+       
+       
+     }
+
+     // A button will call this function
+     //
+     function capturePhoto() {
+       // Take picture using device camera and retrieve image as base64-encoded string
+       var options =   {   quality: 50,
+               destinationType: Camera.DestinationType.FILE_URI,
+               sourceType: 1,      // 0:Photo Library, 1=Camera, 2=Saved Photo Album
+               encodingType: 0,     // 0=JPG 1=PNG
+               saveToPhotoAlbum: 1, 
+               correctOrientation: 1
+           };
+       
+       navigator.camera.getPicture(onPhotoDataSuccess, onFail, options);
+     }
+
+  
+     // Called if something bad happens.
+     // 
+     function onFail(message) {
+       alert('Failed because: ' + message);
+     }
+     
+   
+    // onSuccess Geolocation
+    //
+    function onSuccess(position) {
+        var element = document.getElementById('geolocation');
+        element.innerHTML = 'Latitude: '           + position.coords.latitude              + '<br />' +
+                            'Longitude: '          + position.coords.longitude             + '<br />' ;
+    }
+
+    // onError Callback receives a PositionError object
+    //
+    function onError(error) {
+        alert('code: '    + error.code    + '\n' +
+                'message: ' + error.message + '\n');
+    }
+        
+    function customSubmit(){
+    	var email = document.getElementById('email').value;
+    	var ajax = new XMLHttpRequest();
+		ajax.open("POST","http://www.nextome.it/landing/registrazione.php",true);
+		ajax.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+		ajax.send("e_mail=" + email);
+	
+		
+    	ajax.onreadystatechange=function(){
+			if(ajax.readyState==4 && (ajax.status==200||ajax.status==0)){
+				eval('var data = ' + ajax.responseText + ';');
+				   alert('code: '    + ajax.responseText    + '\n');
+				var theResults = data.results;
+				var element = document.getElementById('res');
+		        element.innerHTML = theResults;
+			}    
+		}
+		
+	}
+    
+    
+    function uploadPhoto() {
+    	
+    	var imageData = window.imgURI;
+    	
+        var options = new FileUploadOptions();
+        options.fileKey="file";
+        options.fileName=imageData.substr(imageData.lastIndexOf('/')+1);
+        options.mimeType="image/jpeg";
+
+        //
+        alert('send ' + imageData);
+        
+        var params = new Object();
+        params.e_mail = document.getElementById('email').value;
+        
+        options.params = params;
+
+        var ft = new FileTransfer();
+        ft.upload(imageData, "http://www.arrighi2013.it/geoApp/getPic.php", win, fail, options);
+    }
+
+    function win(r) {
+        console.log("Code = " + r.responseCode);
+        console.log("Response = " + r.response);
+        console.log("Sent = " + r.bytesSent);
+    }
+
+    function fail(error) {
+        alert("An error has occurred: Code = " + error.code);
+        console.log("upload error source " + error.source);
+        console.log("upload error target " + error.target);
+    }    
+    </script>
+  </head>
+  <body>
+  	<h1>Send a comment</h1>
+  	
+    
+    <form>
+    	<label for="title">Title</label>
+    	<input type="text" name="email" id="email">
+    </form>
+  
+	<img style="display:none;width:60px;height:60px;" id="smallImage" src="" />
+    <div id="geolocation">Finding your location</div>
+    
+     <button onclick="uploadPhoto();">SEND Photo</button> <br>
+    
+  </body>
+</html>
